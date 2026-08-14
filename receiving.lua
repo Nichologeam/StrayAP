@@ -198,12 +198,13 @@ local item_handlers = {
 }
 
 function M.ProcessItem(item) -- called when receiving any item
-    local handler = item_handlers[item.item]
+    local handler = item_handlers[item]
 
     if handler then
+        print("[ArchipelagoMod] Processing " .. tostring(item))
         handler() -- see table above to see each result (basically replicating a switch statement because Lua doesn't have one)
     else
-        print("[ArchipelagoMod] Unknown item: " .. tostring(item.item) .. "\n")
+        print("[ArchipelagoMod] Unknown item: " .. tostring(item) .. "\n")
     end
 end
 

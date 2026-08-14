@@ -7,7 +7,7 @@ print("[ArchipelagoMod] Mod initalized!\n")
 
 local game_name = "Stray"
 local client_version = {0, 6, 7}
-local version = "v0.0.1"
+local version = "v0.0.2"
 local message_format = AP.RenderFormat.TEXT
 local uuid = ""
 ---@type APClient
@@ -51,9 +51,7 @@ function connect(server, slot, password)
             type = "message",
             text = "Disconnected from Archipelago."
         })
-        ap = nil -- unreference client
-        slot_data = {} -- clear slot data
-        collectgarbage("collect") -- garbage collect to remove unneeded client information
+        disconnect()
     end
 
     function on_room_info()
@@ -76,7 +74,7 @@ function connect(server, slot, password)
             print("[ArchipelagoMod]" .. message .. ". Disconnecting.\n")
             os.execute("msg * " .. message) -- displays an os-specific message box popup
             AddMessageToAPFeed("Force disconnecting due to version mismatch.")
-            ap:disconnect() -- force disconnect
+            disconnect() -- force disconnect
         end
         print("[ArchipelagoMod] Goal: " .. tostring(slot_data.Goal) .. "\n") -- 1 = Open the city, 2 = All Badges, 3 = Both, 4 = Specific Chapter
         print("[ArchipelagoMod] ChapterGoal: " .. tostring(slot_data.ChapterGoal) .. "\n") -- Chapters are in order from chapter 4 to 11
@@ -106,7 +104,7 @@ function connect(server, slot, password)
             print(item.item .. "\n")
             table.insert(all_received_items, item.item)
             ExecuteInGameThread(function()
-                receiving.ProcessItem(item)
+                receiving.ProcessItem(item.item)
             end)
         end
         print("\n")
@@ -211,6 +209,8 @@ function AP_Connect(host, slot, password)
     local currentGameProgression = savedata.ChapterAdventureState
     print("[ArchipelagoMod] AdventureState: " .. currentGameProgression)
 
+	ResyncInventory()
+
     LoopAsync(200, function()
         if ap == nil then return false end
         xpcall(function()
@@ -240,9 +240,22 @@ function AP_Connect(host, slot, password)
                 end
             end
         end, function()
-            ap:disconnect()
+            disconnect()
         end)
     end)
+end
+
+function disconnect()
+    if ap == nil then 
+        return
+    end
+    AddMessageToAPFeed("Disconnected from Archipelago.")
+    ap = nil
+    pending_game_actions = {}
+    all_received_items = {}
+    slot_data = {}
+    currentGameProgression = 0
+    collectgarbage("collect")
 end
 
 function ResyncInventory()
@@ -303,7 +316,7 @@ RegisterConsoleCommandHandler("apconnect", function(cmd, args)
     if ap then
         print("[ArchipelagoMod] Already connected.")
         AddMessageToAPFeed("Already connected.")
-        return
+        return true;
     end
     local host = args[1]
     local slot = args[2]
@@ -312,7 +325,7 @@ RegisterConsoleCommandHandler("apconnect", function(cmd, args)
     if not host or not slot then
         print("[ArchipelagoMod] Usage: apconnect <host> <slot> [password]")
         AddMessageToAPFeed("Usage: apconnect <host> <slot> [password]")
-        return
+        return true;
     end
 
     AP_Connect(host, slot, password)
@@ -325,7 +338,7 @@ RegisterConsoleCommandHandler("apsay", function(cmd, args)
     if not ap then
         print("[ArchipelagoMod] You must be connected to chat.")
         AddMessageToAPFeed("You must be connected to chat.")
-        return
+        return true;
     end
 
     ap:Say(message)
@@ -336,10 +349,21 @@ RegisterConsoleCommandHandler("apresync", function(cmd, args)
     if not ap then
         print("[ArchipelagoMod] You must be connected to resync items.")
         AddMessageToAPFeed("You must be connected to resync items.")
-        return
+        return true;
     end
 
     ResyncInventory()
+    return true;
+end)
+
+RegisterConsoleCommandHandler("apdisconnect", function(cmd, args)
+    if not ap then
+        print("[ArchipelagoMod] You're already disconnected!")
+        AddMessageToAPFeed("You're already disconnected!")
+        return true;
+    end
+
+    disconnect()
     return true;
 end)
 
@@ -409,3 +433,5 @@ end, function(RemoteUnrealParam) -- but all the action is in the posthook instea
 end)
 
 sending.Hooks()
+
+
