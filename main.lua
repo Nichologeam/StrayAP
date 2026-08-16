@@ -7,7 +7,8 @@ print("[ArchipelagoMod] Mod initalized!\n")
 
 local game_name = "Stray"
 local client_version = {0, 6, 7}
-local version = "v0.0.2"
+local version = "v0.0.3"
+local compatable_versions = {"v0.0.1", "v0.0.2", "v0.0.3"}
 local message_format = AP.RenderFormat.TEXT
 local uuid = ""
 ---@type APClient
@@ -69,12 +70,25 @@ function connect(server, slot, password)
 
         print("[ArchipelagoMod] Slot connected. Slot data:\n")
         print("[ArchipelagoMod] APWorldVersion: " .. tostring(slot_data.APWorldVersion) .. "\n")
-        if slot_data.APWorldVersion ~= version then
-            local message = "ARCHIPELAGO VERSION MISMATCH! Server is " .. tostring(slot_data.APWorldVersion) .. ", Client is " .. tostring(version)
+        local compatable = false
+        for _, compat_version in ipairs(compatable_versions) do
+            if slot_data.APWorldVersion == compat_version then
+                compatable = true
+                break
+            end
+        end
+        if compatable == false then
+            local message = "AP version mismatch! These two versions are not compatable! Server is " .. tostring(slot_data.APWorldVersion) .. ", Client is " .. tostring(version)
             print("[ArchipelagoMod]" .. message .. ". Disconnecting.\n")
             os.execute("msg * " .. message) -- displays an os-specific message box popup
             AddMessageToAPFeed("Force disconnecting due to version mismatch.")
             disconnect() -- force disconnect
+        end
+        if slot_data.APWorldVersion ~= version and compatable == true then
+            local message = "Minor AP version mismatch! These two versions should be compatable, but proceed with caution. Server is " .. tostring(slot_data.APWorldVersion) .. ", Client is " .. tostring(version)
+            print("[ArchipelagoMod]" .. message .. ".\n")
+            os.execute("msg * " .. message) -- displays an os-specific message box popup
+            AddMessageToAPFeed("Compatable version mismatch. Proceed with caution, and change versions if possible.")
         end
         print("[ArchipelagoMod] Goal: " .. tostring(slot_data.Goal) .. "\n") -- 1 = Open the city, 2 = All Badges, 3 = Both, 4 = Specific Chapter
         print("[ArchipelagoMod] ChapterGoal: " .. tostring(slot_data.ChapterGoal) .. "\n") -- Chapters are in order from chapter 4 to 11
@@ -125,11 +139,13 @@ function connect(server, slot, password)
 
     function on_data_package_changed(data_package)
         print("[ArchipelagoMod] Data package changed:\n")
-        print(data_package .. "\n")
+        for k,v in pairs(data_package) do
+            print(k .. ": " .. tostring(v) .. "\n")
+        end
     end
 
     function on_print(msg)
-        print("[ArchipelagoMod] " .. msg .. "\n")
+        print("[ArchipelagoMod] Print: " .. msg .. "\n")
     end
 
     function on_print_json(msg, extra)
@@ -142,7 +158,9 @@ function connect(server, slot, password)
 
     function on_bounced(bounce)
         print("[ArchipelagoMod] Bounce received:\n")
-        print(bounce .. "\n") -- This throws an error, since you can't print a Lua table. Doesn't really matter for right now, but will when DeathLink is made
+        for k,v in pairs(bounce) do
+            print(k .. ": " .. tostring(v) .. "\n")
+        end
     end
 
     function on_retrieved(map, keys, extra)
@@ -249,6 +267,7 @@ function disconnect()
     if ap == nil then 
         return
     end
+    print("[ArchipelagoMod] Disconnected.\n")
     AddMessageToAPFeed("Disconnected from Archipelago.")
     ap = nil
     pending_game_actions = {}
@@ -362,7 +381,7 @@ RegisterConsoleCommandHandler("apdisconnect", function(cmd, args)
         AddMessageToAPFeed("You're already disconnected!")
         return true;
     end
-
+    print("[ArchipelagoMod] apdisconnect used. Disconnecting...\n")
     disconnect()
     return true;
 end)
@@ -416,10 +435,10 @@ RegisterLoadMapPostHook(function(params)
     local world = UEHelpers:GetWorld()
     local newWorld = world:GetFullName()
     print("World Change! Now " .. newWorld .. "\n")
-    SetupUI() -- world has changed, UI needs rebuilding (since it's a child of the WorldContextObject
+    SetupUI() -- world has changed, UI needs rebuilding (since it's a child of the WorldContextObject)
     if newWorld == "World /Game/Map/_MainGame/HK_Project_MainStart.HK_Project_MainStart" and ap ~= nil then -- main menu
         print("[ArchipelagoMod] Went to main menu. Disconnecting.")
-        ap:disconnect()
+        disconnect()
         return
     end
 end)

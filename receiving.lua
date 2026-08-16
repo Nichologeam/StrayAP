@@ -181,7 +181,7 @@ local item_handlers = {
         local world = UEHelpers:GetWorld()
         local cat = FindFirstOf("BP_CatPawn_C")
         if not cat or not cat:IsValid() then
-            print("[ArchipelagoMod] Paper Bag Trap received inside the main menu or a loading screen. Skipping.")
+            print("[ArchipelagoMod] Paper Bag Trap received inside the main menu or a loading screen. Skipping.\n")
             return
         end
         local bag = world:SpawnActor("/Game/Technical/Components/COMP_CatPaperBag.COMP_CatPaperBag_C", cat:K2_GetActorLocation(), cat:K2_GetActorRotation()) -- could and maybe should use StaticFindObject
@@ -201,7 +201,7 @@ function M.ProcessItem(item) -- called when receiving any item
     local handler = item_handlers[item]
 
     if handler then
-        print("[ArchipelagoMod] Processing " .. tostring(item))
+        print("[ArchipelagoMod] Processing " .. tostring(item) .. "\n")
         handler() -- see table above to see each result (basically replicating a switch statement because Lua doesn't have one)
     else
         print("[ArchipelagoMod] Unknown item: " .. tostring(item) .. "\n")
@@ -217,10 +217,13 @@ function GiveItem(id, chapter) -- uses BP_Backpack_C and HK_SessionSaveData_C
     end
     local backpack = FindFirstOf("BP_Backpack_C")
     if not backpack or not backpack:IsValid() then
-        print("[ArchipelagoMod] Can't give this item because the player doesn't have the backpack!")
+        print("[ArchipelagoMod] Can't give this item because the player doesn't have the backpack!\n")
     else
         local object = LoadAsset(id)
         backpack:InstantiateAndAddActorToInventory(object)
+        print("[ArchipelagoMod] Current Backpack Contents:\n")
+        for _, item in ipairs(backpack.m_inventory) do
+            print("   " .. item:GetFullName() .. "\n")
     end
 
     -- Here's a full list of object pointers dumped from the game:
@@ -305,7 +308,7 @@ function GiveBadge(badge) -- uses both BP_HKPersistentSaveData_C and BP_Backpack
     end
 
     if not backpack or not backpack:IsValid() then
-        print("[ArchipelagoMod] Can't update badges visibility because the player doesn't have the backpack!")
+        print("[ArchipelagoMod] Can't update badges visibility because the player doesn't have the backpack!\n")
     else
         backpack:RefreshBadgesVisibility(false)
         -- That `false` is for if B-12 should be hidden or not
