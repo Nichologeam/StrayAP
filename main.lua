@@ -7,8 +7,8 @@ print("[ArchipelagoMod] Mod initalized!\n")
 
 local game_name = "Stray"
 local client_version = {0, 6, 7}
-local version = "v0.0.3"
-local compatable_versions = {"v0.0.1", "v0.0.2", "v0.0.3"}
+local version = "v0.0.4"
+local compatable_versions = {"v0.0.1", "v0.0.2", "v0.0.3", "v0.0.4"}
 local message_format = AP.RenderFormat.TEXT
 local uuid = ""
 ---@type APClient
@@ -290,6 +290,27 @@ function ResyncInventory()
         for _, item in ipairs(all_received_items) do
             receiving.ProcessItem(item) -- reprocess all items
         end
+        SanitizeBackpackInventory()
+    end
+end
+
+function SanitizeBackpackInventory()
+    local backpack = FindFirstOf("BP_Backpack_C")
+    if not backpack or not backpack:IsValid() then
+        print("[ArchipelagoMod] Can't sanitize the inventory because the cat doesn't have the backpack!\n")
+        return
+    end
+    local array = backpack.m_inventory
+    local temp = {} -- temporary Lua table
+    array:ForEach(function(i, elem)
+        local val = elem:get()
+        if val ~= nil then
+            temp[#temp + 1] = val -- for each element, store its actual value inside the Lua table (if not nil)
+        end
+    end)
+    backpack:ClearInventory() -- wipe the inventory
+    for i, value in ipairs(temp) do
+        array[i] = value -- reassign each value explicity
     end
 end
 

@@ -336,18 +336,26 @@ function M.Hooks()
         if not ap then
             return -- do nothing while offline
         end
+        local backpack = FindFirstOf("BP_Backpack_C")
+        if not backpack or not backpack:IsValid() then
+            print("[ArchipelagoMod] Can't update the inventory because the cat doesn't have the backpack!\n")
+            return
+        end
         -- As far as I am aware, it is impossible to safely remove a value from a TArray inside UE4SS's Lua scripting
         -- The workaround is to make a local Lua table of the TArray, remove the value from that, wipe the TArray, and reassign the Lua table to the TArray
         local temp = {} -- temporary Lua table
         array:ForEach(function(i, elem)
-            temp[i] = elem:get() -- for each element, store its actual value inside the Lua table
+            local val = elem:get()
+            if val ~= nil then
+                temp[#temp + 1] = val -- for each element, store its actual value inside the Lua table (if not nil)
+            end
         end)
         if #temp > 0 then
             table.remove(temp, #temp) -- remove the last value from the Lua table
         end
-        array:Empty() -- wipe the TArray
-        for i = 1, #temp do
-            array[i] = temp[i] -- reassign each value explicity (yes, assigning the value directly this way does work in UE4SS)
+        backpack:ClearInventory() -- wipe the inventory
+        for i, value in ipairs(temp) do
+            array[i] = value -- reassign each value explicity (yes, assigning the value directly this way does work in UE4SS)
         end
     end
 

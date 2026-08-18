@@ -217,13 +217,11 @@ function GiveItem(id, chapter) -- uses BP_Backpack_C and HK_SessionSaveData_C
     end
     local backpack = FindFirstOf("BP_Backpack_C")
     if not backpack or not backpack:IsValid() then
-        print("[ArchipelagoMod] Can't give this item because the player doesn't have the backpack!\n")
+        print("[ArchipelagoMod] Can't give this item because the cat doesn't have the backpack!\n")
     else
         local object = LoadAsset(id)
         backpack:InstantiateAndAddActorToInventory(object)
-        print("[ArchipelagoMod] Current Backpack Contents:\n")
-        for _, item in ipairs(backpack.m_inventory) do
-            print("   " .. item:GetFullName() .. "\n")
+        SanitizeBackpackInventory()
     end
 
     -- Here's a full list of object pointers dumped from the game:
@@ -308,7 +306,7 @@ function GiveBadge(badge) -- uses both BP_HKPersistentSaveData_C and BP_Backpack
     end
 
     if not backpack or not backpack:IsValid() then
-        print("[ArchipelagoMod] Can't update badges visibility because the player doesn't have the backpack!\n")
+        print("[ArchipelagoMod] Can't update badges visibility because the cat doesn't have the backpack!\n")
     else
         backpack:RefreshBadgesVisibility(false)
         -- That `false` is for if B-12 should be hidden or not
@@ -355,3 +353,4 @@ function GiveMemory(id) -- uses BP_HKPersistentSaveData_C
 end
 
 return M
+
